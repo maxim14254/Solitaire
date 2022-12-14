@@ -1,4 +1,3 @@
-include(openglwindow.pri)
 
 QT += core gui
 QT += opengl
@@ -35,4 +34,5 @@ win32: LIBS += -lOpenGL32
 
 RESOURCES += \
     Textures.qrc
+
 
