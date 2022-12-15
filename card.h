@@ -2,6 +2,13 @@
 #define CARD_H
 #include <GL/gl.h>
 
+enum CardSuit
+{
+    Buby = 0,
+    Chervi = 1,
+    Kresti = 2,
+    Piki = 3
+};
 
 class Card
 {
@@ -13,6 +20,8 @@ public:
     ~Card();
     void Show();
     void Show(GLuint texture);
+    CardSuit Suit;
+    int Value;
     int PozitionX;
     int PozitionY;
     int OldPozitionX;

@@ -220,6 +220,14 @@ void OpenGLWindow :: paintGL()
         cards[vec[i]].Show();
     }
 
+    if(cardCombinationsForVictory[0].size() == 13 &&
+       cardCombinationsForVictory[1].size() == 13 &&
+       cardCombinationsForVictory[2].size() == 13 &&
+       cardCombinationsForVictory[3].size() == 13)
+    {
+        newGame();
+    }
+
     if(gameNew)
     {
         Anim = true;
@@ -463,6 +471,42 @@ void OpenGLWindow :: mousePressEvent(QMouseEvent* event)
     }
 }
 
+void AddCardInColode(int x, int y, int z)
+{
+    clickCard->PozitionX = x;
+    clickCard->PozitionY = y + 20;
+    clickCard->PozitionZ = oldZ;
+
+    clickCard->OldPozitionX = clickCard->PozitionX;
+    clickCard->OldPozitionY = clickCard->PozitionY;
+
+    if(clickCard->Id != 0 && !cards[vec[clickCard->Id - 1]].faceShow)
+    {
+        cards[vec[clickCard->Id - 1]].faceShow = true;
+        cards[vec[clickCard->Id - 1]].Colum = clickCard->Colum;
+        cardCombinations[clickCard->Colum].back() = &cards[vec[clickCard->Id - 1]];
+        cardCombinations[clickCard->Colum].back()->PozitionZ = -6;
+    }
+    else if(clickCard->Colum < -1)
+    {
+        cardCombinationsForVictory[abs(clickCard->Colum) - 2].pop_back();
+    }
+    else if(clickCard->Colum > -1)
+    {
+        cardCombinations[clickCard->Colum].pop_back();
+    }
+    else if(sizeOfColode <= cardsInColode.size())
+    {
+        auto it = cardsInColode.begin();
+        std::advance(it, cardsInColode.size() - sizeOfColode);
+        cardsInColode.erase(it);
+        --sizeOfColode;
+
+        cardCombinations[7].back() = cardsInColode[cardsInColode.size() - sizeOfColode];
+    }
+    clickCard->PozitionZ = z + 1;
+}
+
 void OpenGLWindow :: mouseReleaseEvent(QMouseEvent *event)
 {
     if(speedAnim != 0)
@@ -481,83 +525,80 @@ void OpenGLWindow :: mouseReleaseEvent(QMouseEvent *event)
         {
             if(IsCardOnCard(clickCard->PozitionX, clickCard->PozitionY, cells[i].PozitionX, cells[i].PozitionY, clickCard->size))
             {
-                clickCard->PozitionX =cells[i].PozitionX;
-                clickCard->PozitionY = cells[i].PozitionY;
-                clickCard->PozitionZ = -6;
-
-                clickCard->OldPozitionX = clickCard->PozitionX;
-                clickCard->OldPozitionY = clickCard->PozitionY;
-
-                if(clickCard->Colum < -1)
+                if((cardCombinationsForVictory[i - 2].front() == nullptr && clickCard->Value == 0) ||
+                  (cardCombinationsForVictory[i - 2].back() != nullptr && clickCard->Suit == cardCombinationsForVictory[i - 2].back()->Suit && clickCard->Value == cardCombinationsForVictory[i - 2].back()->Value + 1))
                 {
-                    cardCombinationsForVictory[abs(clickCard->Colum) - 2].pop_back();
-                }
-                else if(cardCombinationsForVictory[i - 2].back() != nullptr)
-                {
-                    cardCombinationsForVictory[i - 2].back()->PozitionZ = -7;
-                }
+                    clickCard->PozitionX =cells[i].PozitionX;
+                    clickCard->PozitionY = cells[i].PozitionY;
+                    clickCard->PozitionZ = -6;
 
-                cardCombinationsForVictory[i - 2].push_back(clickCard);
+                    clickCard->OldPozitionX = clickCard->PozitionX;
+                    clickCard->OldPozitionY = clickCard->PozitionY;
 
-                if(!cards[vec[clickCard->Id - 1]].faceShow)
-                {
-                    cards[vec[clickCard->Id - 1]].faceShow = true;
-                    cards[vec[clickCard->Id - 1]].Colum = clickCard->Colum;
-                    cardCombinations[clickCard->Colum].back() = &cards[vec[clickCard->Id - 1]];
-                    cardCombinations[clickCard->Colum].back()->PozitionZ = -6;
-                }
-                else if(clickCard->Colum > -1)
-                {
-                    cardCombinations[clickCard->Colum].pop_back();
-                }
+                    if(cardCombinationsForVictory[i - 2].back() != nullptr)
+                    {
+                        cardCombinationsForVictory[i - 2].back()->PozitionZ = -7;
+                    }
 
-                clickCard->Colum = -i;
-                clickCard = nullptr;
-                update();
-                return;
+                    cardCombinationsForVictory[i - 2].push_back(clickCard);
+
+                    if(!cards[vec[clickCard->Id - 1]].faceShow)
+                    {
+                        cards[vec[clickCard->Id - 1]].faceShow = true;
+                        cards[vec[clickCard->Id - 1]].Colum = clickCard->Colum;
+                        cardCombinations[clickCard->Colum].back() = &cards[vec[clickCard->Id - 1]];
+                        cardCombinations[clickCard->Colum].back()->PozitionZ = -6;
+                    }
+                    else if(clickCard->Colum > -1)
+                    {
+                        cardCombinations[clickCard->Colum].pop_back();
+                    }
+                    else if(clickCard->Colum < -1)
+                    {
+                        cardCombinationsForVictory[abs(clickCard->Colum) - 2].pop_back();
+                    }
+                    else if(clickCard->Colum == -1)
+                    {
+                        auto it = cardsInColode.begin();
+                        std::advance(it, cardsInColode.size() - sizeOfColode);
+                        cardsInColode.erase(it);
+                        --sizeOfColode;
+
+                        cardCombinations[7].back() = cardsInColode[cardsInColode.size() - sizeOfColode];
+                    }
+                    clickCard->Colum = -i;
+                    clickCard = nullptr;
+                    update();
+                    return;
+                }
+                else
+                {
+                    returnCardBack = clickCard;
+                    clickCard = nullptr;
+                    update();
+                    return;
+                }
             }
         }
 
-        for(size_t i = 0; i < 8; ++i)
+        for(size_t i = 0; i < 7; ++i)
         {
-            if(cardCombinations[i].back()!= nullptr && cardCombinations[i].back() != clickCard && IsCardOnCard(clickCard->PozitionX, clickCard->PozitionY, cardCombinations[i].back()->PozitionX, cardCombinations[i].back()->PozitionY, clickCard->size))
+            if(cardCombinations[i].back()!= nullptr && cardCombinations[i].back() != clickCard &&
+              IsCardOnCard(clickCard->PozitionX, clickCard->PozitionY, cardCombinations[i].back()->PozitionX, cardCombinations[i].back()->PozitionY, clickCard->size))
             {
-                clickCard->PozitionX = cardCombinations[i].back()->PozitionX;
-                clickCard->PozitionY = cardCombinations[i].back()->PozitionY + 20;
-                clickCard->PozitionZ = oldZ;
-
-                clickCard->OldPozitionX = clickCard->PozitionX;
-                clickCard->OldPozitionY = clickCard->PozitionY;
-
-                if(!cards[vec[clickCard->Id - 1]].faceShow)
-                {
-                    cards[vec[clickCard->Id - 1]].faceShow = true;
-                    cards[vec[clickCard->Id - 1]].Colum = clickCard->Colum;
-                    cardCombinations[clickCard->Colum].back() = &cards[vec[clickCard->Id - 1]];
-                    cardCombinations[clickCard->Colum].back()->PozitionZ = -6;
-                }
-                else if(clickCard->Colum < -1)
-                {
-                    cardCombinationsForVictory[abs(clickCard->Colum) - 2].pop_back();
-                }
-                else if(clickCard->Colum > -1)
-                {
-                    cardCombinations[clickCard->Colum].pop_back();
-                }
-                else if(sizeOfColode <= cardsInColode.size())
-                {
-                    auto it = cardsInColode.begin();
-                    std::advance(it, cardsInColode.size() - sizeOfColode);
-                    cardsInColode.erase(it);
-                    --sizeOfColode;
-
-                    cardCombinations[7].back() = cardsInColode[cardsInColode.size() - sizeOfColode];
-                }
-
-                int z = cardCombinations[i].back()->PozitionZ;
-                cardCombinations[i].push_back(clickCard);
-                clickCard->PozitionZ = z + 1;
+                AddCardInColode(cardCombinations[i].back()->PozitionX, cardCombinations[i].back()->PozitionY, cardCombinations[i].back()->PozitionZ);
                 clickCard->Colum = i;
+                cardCombinations[i].push_back(clickCard);
+
+                flag = false;
+                break;
+            }
+            else if((cardCombinations[i].back() == nullptr && clickCard->Value == 12) &&
+                    IsCardOnCard(clickCard->PozitionX, clickCard->PozitionY, cells[i + 6].PozitionX, cells[i + 6].PozitionY - 20, clickCard->size))
+            {
+                AddCardInColode(cells[i + 6].PozitionX, cells[i + 6].PozitionY - 20, -7);
+                clickCard->Colum = i;
+                cardCombinations[i].push_back(clickCard);
 
                 flag = false;
                 break;
