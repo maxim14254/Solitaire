@@ -11,6 +11,7 @@ public:
     void Show();
     int PozitionX;
     int PozitionY;
+    int DeltaBetweenCards = 20;
     GLuint texture;
 };
 

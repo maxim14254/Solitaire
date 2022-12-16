@@ -9,6 +9,7 @@ Cell* cells;
 std::vector<std::vector<Card*>> cardCombinations(8);
 std::vector<std::list<Card*>> cardCombinationsForVictory(4);
 std::vector<Card*> cardsInColode;
+std::vector<int> numbersOpenCardInCardCombinations(7);
 std::allocator<Cell> AllocCells;
 std::allocator<Card> AllocCard;
 size_t vec[] {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51};
@@ -63,7 +64,7 @@ void OpenGLWindow :: initializeGL()
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
-    glOrtho(0, 800, 579, 0, -8, 8);
+    glOrtho(0, 800, 578, 0, -8, 8);
 
     glEnable (GL_ALPHA_TEST);
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -143,6 +144,7 @@ void OpenGLWindow :: newGame()
     Anim = false;
     sizeOfColode = 0;
     cardsInColode.clear();
+    numbersOpenCardInCardCombinations.clear();
     for(int i = 0; i < 52; ++i)
     {
        cards[i].PozitionX = 23;
@@ -159,6 +161,10 @@ void OpenGLWindow :: newGame()
        if(i < 4)
        {
            cardCombinationsForVictory[i].clear();
+       }
+       if(i < 13)
+       {
+           cells[i].DeltaBetweenCards = 20;
        }
     }
     paintGL();
@@ -251,6 +257,7 @@ void OpenGLWindow :: paintGL()
         {
             cards[vec[sizeOfColode]].PozitionX += speedAnim;
             cards[vec[sizeOfColode]].PozitionY += speedAnim * tg;
+            cards[vec[sizeOfColode]].PozitionZ = -6;
         }
         else
         {
@@ -263,9 +270,13 @@ void OpenGLWindow :: paintGL()
            if(x == 6 - i && !cards[vec[sizeOfColode]].faceShow)
            {
                cards[vec[sizeOfColode]].faceShow = true;
-               cards[vec[sizeOfColode]].PozitionZ = -6;
+               //cards[vec[sizeOfColode]].PozitionZ = -6;
                cards[vec[sizeOfColode]].Colum = 6 - i;
+               numbersOpenCardInCardCombinations[6 - i] = 6 - i;
            }
+           else
+               cards[vec[sizeOfColode]].PozitionZ = -7;
+
            cards[vec[sizeOfColode]].Colum = 6 - i;
            cardCombinations[6 - i].push_back(&cards[vec[sizeOfColode]]);
            if(sizeOfColode < 24)
@@ -402,7 +413,7 @@ void SetClickCard(Card* card, int x, int y)
     clickCard = card;
     oldZ = clickCard->PozitionZ;
     clickCard->PozitionZ = 8;
-   // qDebug() << &cards[i];
+    // qDebug() << &cards[i];
     deltaX = x- clickCard->PozitionX;
     deltaY = y- clickCard->PozitionY;
     clickCard->PozitionX -= 5;
@@ -417,8 +428,6 @@ void OpenGLWindow :: mousePressEvent(QMouseEvent* event)
         return;
 
     auto xy = event->pos();
-    qDebug() <<"x "<< xy.x();
-    qDebug() <<"y " <<xy.y();
 
     if(xy.x() > cells[0].PozitionX && xy.x() < cells[0].PozitionX + cards[0].size / 1.397 &&
        xy.y() > cells[0].PozitionY && xy.y() < cells[0].PozitionY + cards[0].size)
@@ -464,10 +473,10 @@ void OpenGLWindow :: mousePressEvent(QMouseEvent* event)
     }
 }
 
-void AddCardInColode(int x, int y, int z)
+void AddCardInColode(int x, int y, int z, int deltaY)
 {
     clickCard->PozitionX = x;
-    clickCard->PozitionY = y + 20;
+    clickCard->PozitionY = y + deltaY;
     clickCard->PozitionZ = oldZ;
 
     clickCard->OldPozitionX = clickCard->PozitionX;
@@ -577,18 +586,44 @@ void OpenGLWindow :: mouseReleaseEvent(QMouseEvent *event)
             if(cardCombinations[i].size() > 0 && cardCombinations[i].back() != clickCard &&
                IsCardOnCard(clickCard->PozitionX, clickCard->PozitionY, cardCombinations[i].back()->PozitionX, cardCombinations[i].back()->PozitionY, clickCard->size) &&
                cardCombinations[i].back()->isRed == !clickCard->isRed && cardCombinations[i].back()->Value == clickCard->Value + 1)
-            {
-                AddCardInColode(cardCombinations[i].back()->PozitionX, cardCombinations[i].back()->PozitionY, cardCombinations[i].back()->PozitionZ);
-                clickCard->Colum = i;
+            {               
+                if(cardCombinations[i].back()->PozitionY + cardCombinations[i].back()->size + cells[6 + i].DeltaBetweenCards > 578)
+                {
+                    cells[6 + i].DeltaBetweenCards = (578 - cardCombinations[i][numbersOpenCardInCardCombinations[i]]->PozitionY - cardCombinations[i].back()->size) / (cardCombinations[i].size() - numbersOpenCardInCardCombinations[i]);
+
+                    for(size_t j = numbersOpenCardInCardCombinations[i]; j < cardCombinations[i].size(); ++j)
+                    {
+                        cardCombinations[i][j]->PozitionY = cardCombinations[i][j - 1]->PozitionY + cells[6 + i].DeltaBetweenCards;
+                        cardCombinations[i][j]->OldPozitionY = cardCombinations[i][j - 1]->OldPozitionY + cells[6 + i].DeltaBetweenCards;
+                    }
+                }
+
+                AddCardInColode(cardCombinations[i].back()->PozitionX, cardCombinations[i].back()->PozitionY, cardCombinations[i].back()->PozitionZ, cells[6 + i].DeltaBetweenCards);
                 cardCombinations[i].push_back(clickCard);
+
+                if(cells[6 + clickCard->Colum].DeltaBetweenCards < 20)
+                {
+                    cells[6 + clickCard->Colum].DeltaBetweenCards = (578 - cardCombinations[clickCard->Colum][numbersOpenCardInCardCombinations[clickCard->Colum]]->PozitionY - cardCombinations[clickCard->Colum].back()->size) / (cardCombinations[clickCard->Colum].size() - 1 - numbersOpenCardInCardCombinations[clickCard->Colum]);
+
+                    if(cells[6 + clickCard->Colum].DeltaBetweenCards > 20)
+                        cells[6 + clickCard->Colum].DeltaBetweenCards = 20;
+
+                    for(size_t j = numbersOpenCardInCardCombinations[clickCard->Colum]; j < cardCombinations[clickCard->Colum].size(); ++j)
+                    {
+                        cardCombinations[clickCard->Colum][j]->PozitionY = cardCombinations[clickCard->Colum][j - 1]->PozitionY + cells[6 + clickCard->Colum].DeltaBetweenCards;
+                        cardCombinations[clickCard->Colum][j]->OldPozitionY = cardCombinations[clickCard->Colum][j - 1]->OldPozitionY + cells[6 + clickCard->Colum].DeltaBetweenCards;
+                    }
+                }
+
+                clickCard->Colum = i;
 
                 flag = false;
                 break;
             }
             else if((cardCombinations[i].size() == 0 && clickCard->Value == 12) &&
-                    IsCardOnCard(clickCard->PozitionX, clickCard->PozitionY, cells[i + 6].PozitionX, cells[i + 6].PozitionY - 20, clickCard->size))
+                    IsCardOnCard(clickCard->PozitionX, clickCard->PozitionY, cells[i + 6].PozitionX, cells[i + 6].PozitionY - cells[6 + i].DeltaBetweenCards, clickCard->size))
             {
-                AddCardInColode(cells[i + 6].PozitionX, cells[i + 6].PozitionY - 20, -7);
+                AddCardInColode(cells[i + 6].PozitionX, cells[i + 6].PozitionY - cells[6 +i].DeltaBetweenCards, -7, cells[6 + i].DeltaBetweenCards);
                 clickCard->Colum = i;
                 cardCombinations[i].push_back(clickCard);
 
