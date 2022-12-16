@@ -6,7 +6,7 @@
 
 Card* cards;
 Cell* cells;
-std::vector<std::list<Card*>> cardCombinations(8);
+std::vector<std::vector<Card*>> cardCombinations(8);
 std::vector<std::list<Card*>> cardCombinationsForVictory(4);
 std::vector<Card*> cardsInColode;
 std::allocator<Cell> AllocCells;
@@ -149,6 +149,7 @@ void OpenGLWindow :: newGame()
        cards[i].PozitionY = 15;
        cards[i].faceShow = false;
        cards[i].PozitionZ = -7;
+       cards[i].Colum = -1;
 
        if(i < 8)
        {
@@ -250,14 +251,6 @@ void OpenGLWindow :: paintGL()
         {
             cards[vec[sizeOfColode]].PozitionX += speedAnim;
             cards[vec[sizeOfColode]].PozitionY += speedAnim * tg;
-
-            if(x == 6 - i && !cards[vec[sizeOfColode]].faceShow)
-            {
-                cards[vec[sizeOfColode]].faceShow = true;
-                cards[vec[sizeOfColode]].PozitionZ = -6;
-                cards[vec[sizeOfColode]].Colum = 6 - i;
-                cardCombinations[6 - i].push_back(&cards[vec[sizeOfColode]]);
-            }
         }
         else
         {
@@ -272,9 +265,9 @@ void OpenGLWindow :: paintGL()
                cards[vec[sizeOfColode]].faceShow = true;
                cards[vec[sizeOfColode]].PozitionZ = -6;
                cards[vec[sizeOfColode]].Colum = 6 - i;
-               cardCombinations[6 - i].push_back(&cards[vec[sizeOfColode]]);
            }
-
+           cards[vec[sizeOfColode]].Colum = 6 - i;
+           cardCombinations[6 - i].push_back(&cards[vec[sizeOfColode]]);
            if(sizeOfColode < 24)
            {
                cardsInColode.push_back(&cards[vec[51 - sizeOfColode]]);
@@ -372,7 +365,7 @@ void OpenGLWindow :: paintGL()
             newOpenCard->OldPozitionX = cells[1].PozitionX;
             newOpenCard->OldPozitionY = cells[1].PozitionY;
 
-            if(cardCombinations[7].back() == nullptr)
+            if(cardCombinations[7].size() == 0)
                 cardCombinations[7].push_back(newOpenCard);
             else
                 cardCombinations[7].back() = newOpenCard;
@@ -450,7 +443,7 @@ void OpenGLWindow :: mousePressEvent(QMouseEvent* event)
 
     for(int i = 2; i < 6; ++i)
     {
-        if(xy.x() > cells[i].PozitionX && xy.x() < cells[i].PozitionX + cards[0].size / 1.397 &&
+        if(cardCombinationsForVictory[i - 2].back() != nullptr && xy.x() > cells[i].PozitionX && xy.x() < cells[i].PozitionX + cards[0].size / 1.397 &&
            xy.y() > cells[i].PozitionY && xy.y() < cells[i].PozitionY + cards[0].size)
         {
             SetClickCard(cardCombinationsForVictory[i - 2].back(), xy.x(), xy.y());
@@ -461,9 +454,9 @@ void OpenGLWindow :: mousePressEvent(QMouseEvent* event)
 
     for(int i = 0; i < 8; ++i)
     {
-        if(cardCombinations[i].back()!= nullptr && xy.x() > cardCombinations[i].back()->PozitionX && xy.x() < cardCombinations[i].back()->PozitionX + cardCombinations[i].back()->size / 1.397 &&
+        if(cardCombinations[i].size() > 0 && xy.x() > cardCombinations[i].back()->PozitionX && xy.x() < cardCombinations[i].back()->PozitionX + cardCombinations[i].back()->size / 1.397 &&
            xy.y() > cardCombinations[i].back()->PozitionY && xy.y() < cardCombinations[i].back()->PozitionY + cardCombinations[i].back()->size)
-        {           
+        {
             SetClickCard(cardCombinations[i].back(), xy.x(), xy.y());
             update();
             return;
@@ -480,12 +473,11 @@ void AddCardInColode(int x, int y, int z)
     clickCard->OldPozitionX = clickCard->PozitionX;
     clickCard->OldPozitionY = clickCard->PozitionY;
 
-    if(clickCard->Id != 0 && !cards[vec[clickCard->Id - 1]].faceShow)
+    if(clickCard->Colum > -1 && cardCombinations[clickCard->Colum].size() > 1 && !cardCombinations[clickCard->Colum][cardCombinations[clickCard->Colum].size() - 2]->faceShow)
     {
-        cards[vec[clickCard->Id - 1]].faceShow = true;
-        cards[vec[clickCard->Id - 1]].Colum = clickCard->Colum;
-        cardCombinations[clickCard->Colum].back() = &cards[vec[clickCard->Id - 1]];
-        cardCombinations[clickCard->Colum].back()->PozitionZ = -6;
+        cardCombinations[clickCard->Colum][cardCombinations[clickCard->Colum].size() - 2]->faceShow = true;
+        cardCombinations[clickCard->Colum][cardCombinations[clickCard->Colum].size() - 2]->PozitionZ = -6;
+        cardCombinations[clickCard->Colum].pop_back();
     }
     else if(clickCard->Colum < -1)
     {
@@ -542,12 +534,11 @@ void OpenGLWindow :: mouseReleaseEvent(QMouseEvent *event)
 
                     cardCombinationsForVictory[i - 2].push_back(clickCard);
 
-                    if(!cards[vec[clickCard->Id - 1]].faceShow)
+                    if(clickCard->Colum > -1 && cardCombinations[clickCard->Colum].size() > 1 && !cardCombinations[clickCard->Colum][cardCombinations[clickCard->Colum].size() - 2]->faceShow)
                     {
-                        cards[vec[clickCard->Id - 1]].faceShow = true;
-                        cards[vec[clickCard->Id - 1]].Colum = clickCard->Colum;
-                        cardCombinations[clickCard->Colum].back() = &cards[vec[clickCard->Id - 1]];
-                        cardCombinations[clickCard->Colum].back()->PozitionZ = -6;
+                        cardCombinations[clickCard->Colum][cardCombinations[clickCard->Colum].size() - 2]->faceShow = true;
+                        cardCombinations[clickCard->Colum][cardCombinations[clickCard->Colum].size() - 2]->PozitionZ = -6;
+                        cardCombinations[clickCard->Colum].pop_back();
                     }
                     else if(clickCard->Colum > -1)
                     {
@@ -583,8 +574,9 @@ void OpenGLWindow :: mouseReleaseEvent(QMouseEvent *event)
 
         for(size_t i = 0; i < 7; ++i)
         {
-            if(cardCombinations[i].back()!= nullptr && cardCombinations[i].back() != clickCard &&
-              IsCardOnCard(clickCard->PozitionX, clickCard->PozitionY, cardCombinations[i].back()->PozitionX, cardCombinations[i].back()->PozitionY, clickCard->size))
+            if(cardCombinations[i].size() > 0 && cardCombinations[i].back() != clickCard &&
+               IsCardOnCard(clickCard->PozitionX, clickCard->PozitionY, cardCombinations[i].back()->PozitionX, cardCombinations[i].back()->PozitionY, clickCard->size) &&
+               cardCombinations[i].back()->isRed == !clickCard->isRed && cardCombinations[i].back()->Value == clickCard->Value + 1)
             {
                 AddCardInColode(cardCombinations[i].back()->PozitionX, cardCombinations[i].back()->PozitionY, cardCombinations[i].back()->PozitionZ);
                 clickCard->Colum = i;
@@ -593,7 +585,7 @@ void OpenGLWindow :: mouseReleaseEvent(QMouseEvent *event)
                 flag = false;
                 break;
             }
-            else if((cardCombinations[i].back() == nullptr && clickCard->Value == 12) &&
+            else if((cardCombinations[i].size() == 0 && clickCard->Value == 12) &&
                     IsCardOnCard(clickCard->PozitionX, clickCard->PozitionY, cells[i + 6].PozitionX, cells[i + 6].PozitionY - 20, clickCard->size))
             {
                 AddCardInColode(cells[i + 6].PozitionX, cells[i + 6].PozitionY - 20, -7);
@@ -603,15 +595,11 @@ void OpenGLWindow :: mouseReleaseEvent(QMouseEvent *event)
                 flag = false;
                 break;
             }
-            //int width = (kx / abs(kx)) * (card->PozitionX + card->size) - clickCard->PozitionX;
-            //abs(kx);
-            //IsCardOnCard(clickCard->PozitionX, card->PozitionX);
         }
 
         if(flag)
         {
             returnCardBack = clickCard;
-            //returnCardBack->PozitionZ = 8;
         }
     }
     clickCard = nullptr;

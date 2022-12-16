@@ -11,6 +11,11 @@ Card::Card(int x, int y, GLuint&& textureFace, GLuint textureBack) : PozitionX(x
     this->Suit = CardSuit(suit);
 
     this->Value = textureFace - 3 - (suit * 13);
+
+    if(this->Suit == CardSuit::Buby || this->Suit == CardSuit::Chervi)
+        this->isRed = true;
+    else
+        this->isRed = false;
 }
 
 Card :: ~Card()

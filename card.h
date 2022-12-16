@@ -31,6 +31,7 @@ public:
     int PozitionZ = -7;
     int size = 127;
     bool faceShow = false;
+    bool isRed;
 };
 
 #endif // CARD_H
