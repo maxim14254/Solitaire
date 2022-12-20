@@ -24,11 +24,12 @@ public:
     int Value;
     int PozitionX;
     int PozitionY;
+    int PozitionZ = -7;
     int OldPozitionX;
     int OldPozitionY;
+    int OldPozitionZ;
     int Id;
     int Colum = -1;
-    int PozitionZ = -7;
     int size = 127;
     bool faceShow = false;
     bool isRed;
