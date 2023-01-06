@@ -31,6 +31,7 @@ public:
     int Id;
     int Colum = -1;
     int size = 127;
+    int SpeedAnim = 0;
     bool faceShow = false;
     bool isRed;
 };
