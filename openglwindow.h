@@ -1,5 +1,7 @@
 #include <QtOpenGL/QtOpenGL>
 #include <QOpenGLFunctions>
+#include <QMediaPlayer>
+#include <QMediaPlaylist>
 
 class QPainter;
 class QOpenGLContext;

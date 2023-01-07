@@ -14,10 +14,12 @@ std::vector<Card*> returnCardBack;
 std::allocator<Cell> AllocCells;
 std::allocator<Card> AllocCard;
 size_t vec[] {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51};
-double animTime = 0.0;
+QMediaPlayer* player;
+QMediaPlaylist* playerList;
 Card* clickCard = nullptr;
 Card* doubleClickCard = nullptr;
 Card* newOpenCard = nullptr;
+double animTime = 0.0;
 int deltaX = 0;
 int deltaY = 0;
 int speedAnim = 0;
@@ -33,12 +35,16 @@ OpenGLWindow::OpenGLWindow(QWidget *parent) : QOpenGLWidget(parent)
 {
     cells = std::allocator_traits<std::allocator<Cell>>::allocate(AllocCells, 13);
     cards = std::allocator_traits<std::allocator<Card>>::allocate(AllocCard, 52);
+    playerList = new QMediaPlaylist();
+    player = new QMediaPlayer();
 }
 
 OpenGLWindow :: ~OpenGLWindow()
 {
     std::allocator_traits<std::allocator<Cell>>::deallocate(AllocCells, cells, 13);
     std::allocator_traits<std::allocator<Card>>::deallocate(AllocCard, cards, 52);
+    delete player;
+    delete playerList;
 }
 
 void getTextures(const char* path, GLuint& texture)
@@ -75,17 +81,27 @@ void OpenGLWindow :: initializeGL()
     glAlphaFunc(GL_GREATER, 0.3);
 
     glEnable(GL_TEXTURE_2D);
-    GLuint textures[54];
-    glGenTextures(54, textures);
+    GLuint textures[56];
+    glGenTextures(56, textures);
     getTextures(":/Textures/cell.png", textures[0]);
     getTextures(":/Textures/back.png", textures[1]);
+    getTextures(":/Textures/base_redeal.png", textures[2]);
 
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
+    player->setPlaylist(playerList);
+    playerList->addMedia(QUrl("qrc:/Audio/deal.mp3"));
+    playerList->addMedia(QUrl("qrc:/Audio/get.mp3"));
+    playerList->addMedia(QUrl("qrc:/Audio/put.mp3"));
+    playerList->addMedia(QUrl("qrc:/Audio/return.mp3"));
+    playerList->addMedia(QUrl("qrc:/Audio/scored.mp3"));
+
     int a = 0;
-    int i = 0;
+    int i = 1;
     bool flag = true;
+    Alloc::construct(AllocCells, &cells[0], a + 23, 15, textures[2]);
+    a = a + (23 + 88);
     for(; i < 6; ++i)
     {
         if(flag && i == 2)
@@ -114,29 +130,29 @@ void OpenGLWindow :: initializeGL()
         {
             path = ":/Textures/bu/";
             path += std::to_string(i + 1)+".png";
-            getTextures(path.c_str(), textures[i + 2]);
-            Alloc2::construct(AllocCard, &cards[i], 23, 15, std::move(textures[i + 2]), textures[1]);
+            getTextures(path.c_str(), textures[i + 3]);
+            Alloc2::construct(AllocCard, &cards[i], 23, 15, std::move(textures[i + 3]), textures[1]);
         }
         else if(i >= 13 && i < 26)
         {
             path = ":/Textures/ch/";
             path += std::to_string(i - 12)+".png";
-            getTextures(path.c_str(), textures[i + 2]);
-            Alloc2::construct(AllocCard, &cards[i], 23, 15, std::move(textures[i + 2]), textures[1]);
+            getTextures(path.c_str(), textures[i + 3]);
+            Alloc2::construct(AllocCard, &cards[i], 23, 15, std::move(textures[i + 3]), textures[1]);
         }
         else if(i >= 26 && i < 39)
         {
             path = ":/Textures/kr/";
             path += std::to_string(i - 25)+".png";
-            getTextures(path.c_str(), textures[i + 2]);
-            Alloc2::construct(AllocCard, &cards[i], 23, 15, std::move(textures[i + 2]), textures[1]);
+            getTextures(path.c_str(), textures[i + 3]);
+            Alloc2::construct(AllocCard, &cards[i], 23, 15, std::move(textures[i + 3]), textures[1]);
         }
         else if(i >= 39 && i < 52)
         {
             path = ":/Textures/pi/";
             path += std::to_string(i - 38)+".png";
-            getTextures(path.c_str(), textures[i + 2]);
-            Alloc2::construct(AllocCard, &cards[i], 23, 15, std::move(textures[i + 2]), textures[1]);
+            getTextures(path.c_str(), textures[i + 3]);
+            Alloc2::construct(AllocCard, &cards[i], 23, 15, std::move(textures[i + 3]), textures[1]);
         }
     }
 }
@@ -150,7 +166,7 @@ void OpenGLWindow :: newGame()
 
     columForMove = -1;
     indexForMove = -1;
-    //numbersOpenCardInCardCombinations.clear();
+
     for(int i = 0; i < 52; ++i)
     {
        cards[i].PozitionX = 23;
@@ -174,7 +190,7 @@ void OpenGLWindow :: newGame()
            cells[i].DeltaBetweenCards = 20;
        }
     }
-    //paintGL();
+
     update();
 }
 
@@ -202,6 +218,13 @@ bool IsCardOnCard(int startX, int startY, int finishX, int finishY, size_t size)
     return false;
 }
 
+//void PlayAudio(int numb, QMediaPlaylist::PlaybackMode par)
+//{
+//    playerList->setCurrentIndex(numb);
+//    playerList->setPlaybackMode(par);
+//    player->play();
+//}
+
 void OpenGLWindow :: paintGL()
 {
     auto begin = std::chrono::steady_clock::now();
@@ -220,6 +243,10 @@ void OpenGLWindow :: paintGL()
 
     if(gameNew && !Anim)
     {
+        playerList->setCurrentIndex(0);
+        playerList->setPlaybackMode(QMediaPlaylist::Loop);
+        player->play();
+
         srand(time(NULL));
         for (int i = 51; i >= 1; i--)
         {
@@ -301,6 +328,9 @@ void OpenGLWindow :: paintGL()
             i = 0;
             x = 0;
             speedAnim = 0;
+            player->stop();
+            playerList->setCurrentIndex(1);
+            playerList->setPlaybackMode(QMediaPlaylist::CurrentItemOnce);
         }
         update();
     }
@@ -315,7 +345,7 @@ void OpenGLWindow :: paintGL()
             int y = 0;
             float tg;
 
-            if(animTime > 0 && (speedAnim == 0 && !pressRightButton))
+            if(animTime > 0 && speedAnim == 0 && !pressRightButton)
             {
                 speedAnim = deltaX * 0.08;
 
@@ -447,7 +477,7 @@ void OpenGLWindow :: mouseMoveEvent(QMouseEvent* event)
 
         update();
     }
-    else if(columForMove != -1)// если выделена группа карт
+    else if(columForMove != -1 && clickCard != nullptr)// если выделена группа карт
     {
         for(size_t i = 0; i < cardCombinations[columForMove].size() - indexForMove ; ++i)
         {
@@ -578,6 +608,10 @@ void SetDeltaBetweenCards(int i, bool)
 
 void AddCardInVictoryConmbination(int i, Card* card)
 {
+    playerList->setCurrentIndex(4);
+    playerList->setPlaybackMode(QMediaPlaylist::CurrentItemOnce);
+    player->play();
+
     card->OldPozitionX = cells[i].PozitionX;
     card->OldPozitionY = cells[i].PozitionY;
 
@@ -648,6 +682,9 @@ void OpenGLWindow::mouseDoubleClickEvent(QMouseEvent *event)
 {
    if(doubleClickCard != nullptr)
    {
+       player->play();
+       playerList->setCurrentIndex(1);
+       playerList->setPlaybackMode(QMediaPlaylist::CurrentItemOnce);
        for(size_t j = 2; j < 6; ++j)
        {
            if((cardCombinationsForVictory[j - 2].front() == nullptr && doubleClickCard->Value == 0) ||
@@ -678,6 +715,9 @@ void OpenGLWindow :: mousePressEvent(QMouseEvent* event)
         if(xy.x() > cells[0].PozitionX && xy.x() < cells[0].PozitionX + cards[0].size / 1.397 &&
                 xy.y() > cells[0].PozitionY && xy.y() < cells[0].PozitionY + cards[0].size)
         {
+            playerList->setCurrentIndex(2);
+            playerList->setPlaybackMode(QMediaPlaylist::CurrentItemOnce);
+            player->play();
             if(sizeOfColode == cardsInColode.size())
             {
                 for(auto d : cardsInColode)
@@ -700,9 +740,14 @@ void OpenGLWindow :: mousePressEvent(QMouseEvent* event)
         if(cardCombinations[7].size() > 0 && xy.x() > cells[1].PozitionX && xy.x() < cells[1].PozitionX + cards[0].size / 1.397 &&
                 xy.y() > cells[1].PozitionY && xy.y() < cells[1].PozitionY + cards[0].size)
         {
+            player->play();
+            playerList->setCurrentIndex(1);
+            playerList->setPlaybackMode(QMediaPlaylist::CurrentItemOnce);
+
             SetClickCard(cardCombinations[7].back(), xy.x(), xy.y());
             doubleClickCard = clickCard;
             update();
+
             return;
         }
 
@@ -713,6 +758,10 @@ void OpenGLWindow :: mousePressEvent(QMouseEvent* event)
             if(cardCombinationsForVictory[i - 2].back() != nullptr && xy.x() > cells[i].PozitionX && xy.x() < cells[i].PozitionX + cards[0].size / 1.397 &&
                     xy.y() > cells[i].PozitionY && xy.y() < cells[i].PozitionY + cards[0].size)
             {
+                player->play();
+                playerList->setCurrentIndex(1);
+                playerList->setPlaybackMode(QMediaPlaylist::CurrentItemOnce);
+
                 SetClickCard(cardCombinationsForVictory[i - 2].back(), xy.x(), xy.y());
                 update();
                 return;
@@ -726,6 +775,11 @@ void OpenGLWindow :: mousePressEvent(QMouseEvent* event)
             if(cardCombinations[i].size() > 0 && xy.x() > cardCombinations[i].back()->PozitionX && xy.x() < cardCombinations[i].back()->PozitionX + cardCombinations[i].back()->size / 1.397 &&
                     xy.y() > cardCombinations[i][numbersOpenCardInCardCombinations[i]]->PozitionY && xy.y() < cardCombinations[i].back()->PozitionY + cardCombinations[i].back()->size)
             {
+
+                player->play();
+                playerList->setCurrentIndex(1);
+                playerList->setPlaybackMode(QMediaPlaylist::CurrentItemOnce);
+
                 if(xy.y() > cardCombinations[i].back()->PozitionY)
                 {
                     SetClickCard(cardCombinations[i].back(), xy.x(), xy.y());
@@ -764,6 +818,7 @@ void OpenGLWindow :: mousePressEvent(QMouseEvent* event)
                     deltaY = xy.y() - cardCombinations[i][numbersOpenCardInCardCombinations[i] + count]->PozitionY;
                 }
                 doubleClickCard = clickCard;
+
                 update();
                 return;
             }
@@ -783,6 +838,8 @@ void OpenGLWindow :: mouseReleaseEvent(QMouseEvent *event)
 
     if(clickCard != nullptr)
     {
+        playerList->setCurrentIndex(3);
+        playerList->setPlaybackMode(QMediaPlaylist::CurrentItemOnce);
         deltaX = 0;
         deltaY = 0;
         bool flag = true;
@@ -949,6 +1006,7 @@ void OpenGLWindow :: mouseReleaseEvent(QMouseEvent *event)
                 columForMove = -1;
             }
         }
+        player->play();
     }
     clickCard = nullptr;
     update();

@@ -54,5 +54,11 @@
         <file>Textures/pi/11.png</file>
         <file>Textures/pi/12.png</file>
         <file>Textures/pi/13.png</file>
+        <file>Textures/base_redeal.png</file>
+        <file>Audio/deal.mp3</file>
+        <file>Audio/get.mp3</file>
+        <file>Audio/put.mp3</file>
+        <file>Audio/return.mp3</file>
+        <file>Audio/scored.mp3</file>
     </qresource>
 </RCC>

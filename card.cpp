@@ -6,11 +6,11 @@ Card::Card(int x, int y, GLuint&& textureFace, GLuint textureBack) : PozitionX(x
     OldPozitionX = x;
     OldPozitionY = y;
 
-    int suit = (textureFace - 3) / 13;
+    int suit = (textureFace - 4) / 13;
 
     this->Suit = CardSuit(suit);
 
-    this->Value = textureFace - 3 - (suit * 13);
+    this->Value = textureFace - 4 - (suit * 13);
 
     if(this->Suit == CardSuit::Buby || this->Suit == CardSuit::Chervi)
         this->isRed = true;
