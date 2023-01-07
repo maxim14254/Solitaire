@@ -461,6 +461,8 @@ void OpenGLWindow :: paintGL()
 
     auto end = std::chrono::steady_clock::now();
     animTime = std::chrono::duration<double>(end - begin).count();
+    auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
+    std::this_thread::sleep_for(std::chrono::milliseconds(std::chrono::milliseconds(10) - elapsed_ms));
 }
 
 void OpenGLWindow :: mouseMoveEvent(QMouseEvent* event)
