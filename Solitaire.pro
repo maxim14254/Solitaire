@@ -36,3 +36,6 @@ win32: LIBS += -lOpenGL32
 RESOURCES += \
     Resources.qrc
 
+DISTFILES += \
+    win32-release/Solitaire.exe
+
