@@ -400,6 +400,8 @@ void OpenGLWindow :: paintGL()
                 returnCardBack[i]->PozitionY = returnCardBack[i]->OldPozitionY;
                 returnCardBack[i]->PozitionZ = returnCardBack[i]->OldPozitionZ;
 
+                returnCardBack[i]->SpeedAnim = 0;
+
                 if(pressRightButton)
                 {
                     auto it = returnCardBack.begin();
@@ -525,12 +527,13 @@ void AddCardInCombination(int x, int y, int z, int deltaY, int index, int numbCo
     {
         cardCombinations[oldColum][numbersOpenCardInCardCombinations[oldColum] - 1]->faceShow = true;
         cardCombinations[oldColum][numbersOpenCardInCardCombinations[oldColum] - 1]->PozitionZ = -6;
-        cardCombinations[oldColum].erase(cardCombinations[oldColum].begin() + index + 1, cardCombinations[oldColum].end());
+        cardCombinations[oldColum].erase(cardCombinations[oldColum].begin() + (index + 1), cardCombinations[oldColum].end());
         numbersOpenCardInCardCombinations[oldColum] = numbersOpenCardInCardCombinations[oldColum] - 1;
     }
     else if(oldColum < -1)
     {
         cardCombinationsForVictory[abs(oldColum) - 2].pop_back();
+
         clickCard->OldPozitionX = clickCard->PozitionX = x;
         clickCard->OldPozitionY = clickCard->PozitionY = y + deltaY;
         clickCard->OldPozitionZ = clickCard->PozitionZ = z + 1;
@@ -540,7 +543,7 @@ void AddCardInCombination(int x, int y, int z, int deltaY, int index, int numbCo
     }
     else if(oldColum > -1)
     {
-        cardCombinations[oldColum].erase(cardCombinations[oldColum].begin() + index + 1, cardCombinations[oldColum].end());
+        cardCombinations[oldColum].erase(cardCombinations[oldColum].begin() + (index + 1), cardCombinations[oldColum].end());
 
         if(cardCombinations[oldColum].size() == 0)
         {
@@ -650,7 +653,10 @@ void AddCardInVictoryConmbination(int i, Card* card)
     }
 
     card->size -= 10;
-    SetDeltaBetweenCards(card->Colum, true);
+
+    if(card->Colum >= 0)
+        SetDeltaBetweenCards(card->Colum, true);
+
     card->Colum = -i;
 }
 
@@ -664,8 +670,8 @@ void AnalysisCardsForVictoryConmbination(size_t countI)
         {
             if(cardCombinationsForVictory[j -2].size() == 13) continue;
 
-            if((cardCombinationsForVictory[j - 2].front() == nullptr && cardCombinations[i].back()->Value == 0) ||
-              (cardCombinationsForVictory[j - 2].back() != nullptr && cardCombinations[i].back()->Suit == cardCombinationsForVictory[j - 2].back()->Suit && cardCombinations[i].back()->Value == cardCombinationsForVictory[j - 2].back()->Value + 1))
+            if((cardCombinationsForVictory[j - 2].empty() && cardCombinations[i].back()->Value == 0) ||
+              (!cardCombinationsForVictory[j - 2].empty() && cardCombinations[i].back()->Suit == cardCombinationsForVictory[j - 2].back()->Suit && cardCombinations[i].back()->Value == cardCombinationsForVictory[j - 2].back()->Value + 1))
             {
                 returnCardBack.push_back(cardCombinations[i].back());
                 AddCardInVictoryConmbination(j, cardCombinations[i].back());
@@ -689,8 +695,8 @@ void OpenGLWindow::mouseDoubleClickEvent(QMouseEvent *event)
        playerList->setPlaybackMode(QMediaPlaylist::CurrentItemOnce);
        for(size_t j = 2; j < 6; ++j)
        {
-           if((cardCombinationsForVictory[j - 2].front() == nullptr && doubleClickCard->Value == 0) ||
-             (cardCombinationsForVictory[j - 2].back() != nullptr && doubleClickCard->Suit == cardCombinationsForVictory[j - 2].back()->Suit && doubleClickCard->Value == cardCombinationsForVictory[j - 2].back()->Value + 1))
+           if((cardCombinationsForVictory[j - 2].empty() && doubleClickCard->Value == 0) ||
+             (!cardCombinationsForVictory[j - 2].empty() && doubleClickCard->Suit == cardCombinationsForVictory[j - 2].back()->Suit && doubleClickCard->Value == cardCombinationsForVictory[j - 2].back()->Value + 1))
            {
                returnCardBack.push_back(doubleClickCard);
                AddCardInVictoryConmbination(j, doubleClickCard);
@@ -757,7 +763,7 @@ void OpenGLWindow :: mousePressEvent(QMouseEvent* event)
         for(int i = 2; i < 6 && xy.x() > cells[2].PozitionX && xy.x() < cells[5].PozitionX + cards[0].size / 1.397 &&
             xy.y() > cells[2].PozitionY && xy.y() < cells[5].PozitionY + cards[0].size; ++i)
         {
-            if(cardCombinationsForVictory[i - 2].back() != nullptr && xy.x() > cells[i].PozitionX && xy.x() < cells[i].PozitionX + cards[0].size / 1.397 &&
+            if(!cardCombinationsForVictory[i - 2].empty() && xy.x() > cells[i].PozitionX && xy.x() < cells[i].PozitionX + cards[0].size / 1.397 &&
                     xy.y() > cells[i].PozitionY && xy.y() < cells[i].PozitionY + cards[0].size)
             {
                 player->play();
@@ -851,8 +857,8 @@ void OpenGLWindow :: mouseReleaseEvent(QMouseEvent *event)
         {
             if(IsCardOnCard(clickCard->PozitionX, clickCard->PozitionY, cells[i].PozitionX, cells[i].PozitionY, clickCard->size))
             {
-                if((cardCombinationsForVictory[i - 2].front() == nullptr && clickCard->Value == 0) ||
-                   (cardCombinationsForVictory[i - 2].back() != nullptr && clickCard->Suit == cardCombinationsForVictory[i - 2].back()->Suit && clickCard->Value == cardCombinationsForVictory[i - 2].back()->Value + 1))
+                if((cardCombinationsForVictory[i - 2].empty() && clickCard->Value == 0) ||
+                   (!cardCombinationsForVictory[i - 2].empty() && clickCard->Suit == cardCombinationsForVictory[i - 2].back()->Suit && clickCard->Value == cardCombinationsForVictory[i - 2].back()->Value + 1))
                 {
                     clickCard->PozitionX = cells[i].PozitionX;
                     clickCard->PozitionY = cells[i].PozitionY;
@@ -910,7 +916,17 @@ void OpenGLWindow :: mouseReleaseEvent(QMouseEvent *event)
             {               
                 SetDeltaBetweenCards(i);
                 int oldColum = clickCard->Colum;
-                AddCardInCombination(cardCombinations[i].back()->PozitionX, cardCombinations[i].back()->PozitionY, cardCombinations[i].back()->PozitionZ, cells[6 + i].DeltaBetweenCards, cardCombinations[clickCard->Colum].size() - 2, i);
+                if(oldColum < 0)
+                {
+                    AddCardInCombination(cardCombinations[i].back()->PozitionX, cardCombinations[i].back()->PozitionY, cardCombinations[i].back()->PozitionZ, cells[6 + i].DeltaBetweenCards, -1, i);
+
+                    cardCombinations[i].push_back(clickCard);
+                    flag = false;
+                    break;
+                }
+                else
+                    AddCardInCombination(cardCombinations[i].back()->PozitionX, cardCombinations[i].back()->PozitionY, cardCombinations[i].back()->PozitionZ, cells[6 + i].DeltaBetweenCards, cardCombinations[clickCard->Colum].size() - 2, i);
+
                 cardCombinations[i].push_back(clickCard);
 
                 SetDeltaBetweenCards(oldColum, true);

@@ -1,5 +1,6 @@
 #ifndef CARD_H
 #define CARD_H
+#include <windows.h>
 #include <GL/gl.h>
 
 enum CardSuit

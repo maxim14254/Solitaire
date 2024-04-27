@@ -1,5 +1,6 @@
 #ifndef CELL_H
 #define CELL_H
+#include <windows.h>
 #include <GL/gl.h>
 
 

@@ -1,5 +1,5 @@
 #include "card.h"
-#include <GL/gl.h>
+
 
 Card::Card(int x, int y, GLuint&& textureFace, GLuint textureBack) : PozitionX(x), PozitionY(y), textureFace(textureFace), textureBack(textureBack)
 {
