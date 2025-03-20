@@ -4,35 +4,17 @@
 #include <cmath>
 #include <list>
 
-Card* cards;
-Cell* cells;
-std::vector<std::vector<Card*>> cardCombinations(8);
-std::vector<std::list<Card*>> cardCombinationsForVictory(4);
-std::vector<Card*> cardsInColode;
-std::vector<int> numbersOpenCardInCardCombinations(8);
-std::vector<Card*> returnCardBack;
-std::allocator<Cell> AllocCells;
-std::allocator<Card> AllocCard;
-size_t vec[] {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51};
-QMediaPlayer* player;
-QMediaPlaylist* playerList;
-Card* clickCard = nullptr;
-Card* doubleClickCard = nullptr;
-Card* newOpenCard = nullptr;
-double animTime = 0.0;
-int deltaX = 0;
-int deltaY = 0;
-int speedAnim = 0;
-int columForMove = -1;
-size_t indexForMove = -1;
-size_t sizeOfColode = 0;
-bool gameNew = true;
-bool Anim = false;
-bool flag = false;
-bool pressRightButton = false;
+
 
 OpenGLWindow::OpenGLWindow(QWidget *parent) : QOpenGLWidget(parent)
 {
+    cardCombinations.resize(8);
+    cardCombinationsForVictory.resize(4);
+    numbersOpenCardInCardCombinations.resize(8);
+
+    for(int i = 0; i < 52; ++i)
+        vec[i] = i;
+
     cells = std::allocator_traits<std::allocator<Cell>>::allocate(AllocCells, 13);
     cards = std::allocator_traits<std::allocator<Card>>::allocate(AllocCard, 52);
     playerList = new QMediaPlaylist();
@@ -492,7 +474,7 @@ void OpenGLWindow :: mouseMoveEvent(QMouseEvent* event)
     }
 }
 
-void SetClickCard(Card* card, int x, int y)
+void OpenGLWindow::SetClickCard(Card* card, int x, int y)
 {
     clickCard = card;
     clickCard->OldPozitionZ = clickCard->PozitionZ;
@@ -507,7 +489,7 @@ void SetClickCard(Card* card, int x, int y)
     clickCard->size += 10;
 }
 
-void AddCardInCombination(int x, int y, int z, int deltaY, int index, int numbColum)
+void OpenGLWindow::AddCardInCombination(int x, int y, int z, int deltaY, int index, int numbColum)
 {
     int oldColum = clickCard->Colum;
     for(size_t i = index + 1; oldColum >= 0 && i < cardCombinations[oldColum].size(); ++i)
@@ -570,7 +552,7 @@ void AddCardInCombination(int x, int y, int z, int deltaY, int index, int numbCo
     }
 }
 
-void SetDeltaBetweenCards(int i)
+void OpenGLWindow::SetDeltaBetweenCards(int i)
 {
     if(cardCombinations[i].back()->PozitionY + cardCombinations[i].back()->size + cells[6 + i].DeltaBetweenCards > 578)
     {
@@ -586,7 +568,7 @@ void SetDeltaBetweenCards(int i)
     }
 }
 
-void SetDeltaBetweenCards(int i, bool)
+void OpenGLWindow::SetDeltaBetweenCards(int i, bool)
 {
     int k = 1;
     if(cardCombinations[i].size() == numbersOpenCardInCardCombinations[i] + 1)
@@ -611,7 +593,7 @@ void SetDeltaBetweenCards(int i, bool)
     }
 }
 
-void AddCardInVictoryConmbination(int i, Card* card)
+void OpenGLWindow::AddCardInVictoryConmbination(int i, Card* card)
 {
     playerList->setCurrentIndex(4);
     playerList->setPlaybackMode(QMediaPlaylist::CurrentItemOnce);
@@ -660,7 +642,7 @@ void AddCardInVictoryConmbination(int i, Card* card)
     card->Colum = -i;
 }
 
-void AnalysisCardsForVictoryConmbination(size_t countI)
+void OpenGLWindow::AnalysisCardsForVictoryConmbination(size_t countI)
 {
     for(size_t i = 0; i < countI; ++i)
     {
